@@ -1,0 +1,44 @@
+@inherits LayoutComponentBase
+@inject CookieThemeService CookieThemeService
+@using TestClaudeLMS01.Client.Services
+<RadzenComponents />
+
+<RadzenLayout>
+    <RadzenHeader>
+        <RadzenRow JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center" Gap="0">
+            <RadzenColumn Size="5">
+                <RadzenSidebarToggle Click="@SidebarToggleClick"></RadzenSidebarToggle>
+            </RadzenColumn>
+            <RadzenColumn Size="7">
+                <RadzenStack AlignItems="AlignItems.Center" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" class="rz-px-2">
+                    <RadzenButton Icon="notifications" Variant="Variant.Text" style="color: white;" />
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenButton Icon="person" Variant="Variant.Text" style="color: white;" />
+                        <RadzenText Text="@GetRoleLabel()" style="font-size: 14px; margin: 0; color: white;" />
+                    </RadzenStack>
+                    <RadzenButton Icon="logout" Title="Logga ut" Variant="Variant.Text" Click="@OnLogout" style="color: white;" />
+                    <RadzenAppearanceToggle style="color: white;" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenHeader>
+    <RadzenBody Expanded="@sidebarExpanded">
+        <RadzenRow class="rz-mx-auto rz-px-4 rz-pt-2 rz-pt-md-4 rz-pt-lg-6 rz-pt-xl-12 rz-pb-2 rz-pb-lg-12" Style="max-width: 1440px;">
+            <RadzenColumn Size="12">
+            @Body
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenBody>
+    <RadzenSidebar @bind-Expanded="@sidebarExpanded">
+        <RadzenStack AlignItems="Radzen.AlignItems.Center" class="rz-py-4 rz-py-lg-6" Style="padding: var(--rz-panel-menu-item-padding); border-bottom: var(--rz-panel-menu-item-border);">
+            <RadzenIcon Icon="menu_book" style="font-size: 32px;" />
+            <RadzenText Text="Lexicon LMS" TextStyle="Radzen.Blazor.TextStyle.Subtitle1" class="rz-mb-0" style="color: var(--rz-sidebar-color);" />
+        </RadzenStack>
+        <RadzenPanelMenu>
+            @foreach (var item in GetMenuItems())
+            {
+                <RadzenPanelMenuItem Text="@item.Text" Icon="@item.Icon" Path="@item.Path" Match="@item.Match" />
+            }
+        </RadzenPanelMenu>
+    </RadzenSidebar>
+</RadzenLayout>

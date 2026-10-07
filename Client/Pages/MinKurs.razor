@@ -1,0 +1,105 @@
+@page "/min-kurs"
+@inject MockDataService MockDataService
+@using TestClaudeLMS01.Client.Services
+
+<PageTitle>Min kurs</PageTitle>
+
+<RadzenStack Gap="2rem">
+    <!-- Rubrik -->
+    <div>
+        <RadzenText Text="@Course.Name" TextStyle="Radzen.Blazor.TextStyle.DisplayH4" />
+        <RadzenText Text="@Course.Description" TextStyle="Radzen.Blazor.TextStyle.Body2" style="color: var(--rz-text-secondary-color);" />
+    </div>
+
+    <!-- Kurs-info & framsteg -->
+    <RadzenRow Gap="2rem" RowGap="1rem">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenCard Style="padding: 20px;">
+                <RadzenText Text="Kursframsteg" TextStyle="Radzen.Blazor.TextStyle.H6" style="margin-bottom: 15px;" />
+                <RadzenProgressBar Value="67" style="margin-bottom: 10px;" />
+                <RadzenText Text="67% genomfört" TextStyle="Radzen.Blazor.TextStyle.Body2" style="color: var(--rz-text-secondary-color);" />
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenCard Style="padding: 20px;">
+                <RadzenText Text="Tidsplan" TextStyle="Radzen.Blazor.TextStyle.H6" style="margin-bottom: 15px;" />
+                <RadzenText Text="@($"Startar: {Course.StartDate:d MMMM yyyy}")" TextStyle="Radzen.Blazor.TextStyle.Body2" />
+                <RadzenText Text="@($"Slutar: {Course.EndDate:d MMMM yyyy}")" TextStyle="Radzen.Blazor.TextStyle.Body2" style="color: var(--rz-text-secondary-color);" />
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Moduler -->
+    <div>
+        <RadzenText Text="Moduler" TextStyle="Radzen.Blazor.TextStyle.H5" style="margin-bottom: 15px;" />
+        <RadzenStack Gap="1.5rem">
+            @foreach (var module in Course.Modules)
+            {
+                <RadzenCard Style="padding: 20px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"
+                           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';"
+                           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.06)';">
+                    <RadzenStack Gap="1rem">
+                        <!-- Modul-titel -->
+                        <div>
+                            <RadzenText Text="@module.Name" TextStyle="Radzen.Blazor.TextStyle.H6" />
+                            <RadzenText Text="@module.Description" TextStyle="Radzen.Blazor.TextStyle.Body2" style="color: var(--rz-text-secondary-color); margin-top: 5px;" />
+                        </div>
+
+                        <!-- Framsteg -->
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <RadzenProgressBar Value="@module.CompletionPercent" style="flex: 1;" />
+                            <RadzenText Text="@($"{module.CompletionPercent}%")" TextStyle="Radzen.Blazor.TextStyle.Body2" style="min-width: 45px; text-align: right; font-weight: 500;" />
+                        </div>
+
+                        <!-- Datum -->
+                        <div style="display: flex; align-items: center; gap: 6px; color: var(--rz-text-secondary-color);">
+                            <RadzenIcon Icon="calendar_today" style="font-size: 14px;" />
+                            <RadzenText Text="@($"{module.StartDate:MMM dd} - {module.EndDate:MMM dd}")" TextStyle="Radzen.Blazor.TextStyle.Caption" />
+                        </div>
+
+                        <!-- Aktiviteter -->
+                        @if (module.Activities.Count > 0)
+                        {
+                            <div style="padding-top: 15px; border-top: 1px solid var(--rz-border-color);">
+                                <RadzenText Text="@($"{module.Activities.Count} aktiviteter")" TextStyle="Radzen.Blazor.TextStyle.Body2" style="margin-bottom: 10px; font-weight: 500;" />
+                                <RadzenStack Gap="0.8rem">
+                                    @foreach (var activity in module.Activities)
+                                    {
+                                        <div style="padding: 10px; background-color: var(--rz-body-background-color); border-radius: 6px; display: flex; gap: 10px; align-items: start;">
+                                            <RadzenIcon Icon="@GetActivityIcon(activity.Type)" style="color: var(--rz-primary); flex-shrink: 0; margin-top: 2px;" />
+                                            <div style="flex: 1;">
+                                                <RadzenText Text="@activity.Name" TextStyle="Radzen.Blazor.TextStyle.Body2" />
+                                                <RadzenText Text="@activity.Type" TextStyle="Radzen.Blazor.TextStyle.Caption" style="color: var(--rz-text-secondary-color);" />
+                                            </div>
+                                        </div>
+                                    }
+                                </RadzenStack>
+                            </div>
+                        }
+                    </RadzenStack>
+                </RadzenCard>
+            }
+        </RadzenStack>
+    </div>
+</RadzenStack>
+
+@code {
+    private Course Course;
+
+    protected override void OnInitialized()
+    {
+        Course = MockDataService.GetCourse(1); // Frontend-utvecklare
+    }
+
+    private string GetActivityIcon(string type)
+    {
+        return type switch
+        {
+            "Föreläsning" => "school",
+            "Övning" => "build",
+            "E-learning" => "computer",
+            "Inlämning" => "assignment",
+            _ => "class"
+        };
+    }
+}

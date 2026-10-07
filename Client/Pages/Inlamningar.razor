@@ -1,0 +1,198 @@
+@page "/inlamningar"
+@inject MockDataService MockDataService
+@using TestClaudeLMS01.Client.Services
+
+<PageTitle>Inlämningar</PageTitle>
+
+<RadzenStack Gap="2rem">
+    <!-- Rubrik -->
+    <div>
+        <RadzenText Text="Dina inlämningar" TextStyle="Radzen.Blazor.TextStyle.DisplayH4" />
+    </div>
+
+    <!-- Statistik-sammanfattning -->
+    <RadzenRow Gap="2rem" RowGap="1rem">
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard Style="padding: 15px; text-align: center; background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white;">
+                <RadzenText Text="@Assignments.Count(a => a.Status == "Inlämnad").ToString()" TextStyle="Radzen.Blazor.TextStyle.H4" style="margin: 0; color: white;" />
+                <RadzenText Text="Inlämnad" TextStyle="Radzen.Blazor.TextStyle.Caption" style="color: rgba(255,255,255,0.9);" />
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard Style="padding: 15px; text-align: center; background: linear-gradient(135deg, #ff9800 0%, #fb8500 100%); color: white;">
+                <RadzenText Text="@Assignments.Count(a => a.Status == "Ej inlämnad").ToString()" TextStyle="Radzen.Blazor.TextStyle.H4" style="margin: 0; color: white;" />
+                <RadzenText Text="Väntar" TextStyle="Radzen.Blazor.TextStyle.Caption" style="color: rgba(255,255,255,0.9);" />
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard Style="padding: 15px; text-align: center; background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white;">
+                <RadzenText Text="@Assignments.Count(a => !string.IsNullOrEmpty(a.Feedback)).ToString()" TextStyle="Radzen.Blazor.TextStyle.H4" style="margin: 0; color: white;" />
+                <RadzenText Text="Feedback mottaget" TextStyle="Radzen.Blazor.TextStyle.Caption" style="color: rgba(255,255,255,0.9);" />
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard Style="padding: 15px; text-align: center; background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); color: white;">
+                <RadzenText Text="@(Assignments.Where(a => a.Grade.HasValue).Any() ? ((int)Assignments.Where(a => a.Grade.HasValue).Average(a => a.Grade)).ToString() : "—")" TextStyle="Radzen.Blazor.TextStyle.H4" style="margin: 0; color: white;" />
+                <RadzenText Text="Genomsnitt" TextStyle="Radzen.Blazor.TextStyle.Caption" style="color: rgba(255,255,255,0.9);" />
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Inlämningar-tabell -->
+    <RadzenCard Style="padding: 20px;">
+        <div style="overflow-x: auto;">
+            <RadzenDataGrid Data="@Assignments" AllowPaging="true" PageSize="10" PagerHorizontalAlign="HorizontalAlign.Left">
+                <Columns>
+                    <RadzenDataGridColumn Property="Name" Title="Uppgift" Width="auto" />
+                    <RadzenDataGridColumn Property="Deadline" Title="Deadline" Width="auto" FormatString="{0:dd MMM}" />
+                    <RadzenDataGridColumn Property="Status" Title="Status" Width="auto">
+                    <Template Context="data">
+                        @{
+                            var a = (Assignment)data;
+                            <RadzenBadge Text="@a.Status" style="@GetBadgeStyle(a.Status)" />
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="Grade" Title="Betyg" Width="auto">
+                    <Template Context="data">
+                        @{
+                            var assignment = (Assignment)data;
+                            if (assignment.Grade.HasValue)
+                            {
+                                <span style="font-weight: 500; color: #4caf50;">@assignment.Grade%</span>
+                            }
+                            else
+                            {
+                                <span style="color: var(--rz-text-secondary-color);">-</span>
+                            }
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="Feedback" Width="auto">
+                    <Template Context="data">
+                        @{
+                            var assignment = (Assignment)data;
+                            if (!string.IsNullOrEmpty(assignment.Feedback))
+                            {
+                                <span style="color: #4caf50;">✓ Mottaget</span>
+                            }
+                            else if (assignment.Status == "Inlämnad")
+                            {
+                                <span style="color: var(--rz-text-secondary-color);">Väntar...</span>
+                            }
+                            else
+                            {
+                                <span style="color: var(--rz-text-secondary-color);">-</span>
+                            }
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    </RadzenCard>
+
+    <!-- Detalj-kort för varje inlämning -->
+    <div>
+        <RadzenText Text="Detaljer" TextStyle="Radzen.Blazor.TextStyle.H5" style="margin-bottom: 15px;" />
+        <RadzenStack Gap="1.5rem">
+            @foreach (var assignment in Assignments)
+            {
+                var borderColor = GetStatusColor(assignment.Status);
+                <RadzenCard Style="@($"padding: 20px; border-left: 4px solid {borderColor};")">
+                    <RadzenStack Gap="1rem">
+                        <!-- Titel & Status -->
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div>
+                                <RadzenText Text="@assignment.Name" TextStyle="Radzen.Blazor.TextStyle.H6" />
+                                <RadzenText Text="Frontend-utvecklare" TextStyle="Radzen.Blazor.TextStyle.Caption" style="color: var(--rz-text-secondary-color); margin-top: 5px;" />
+                            </div>
+                            <RadzenBadge Text="@assignment.Status" style="@GetBadgeStyle(assignment.Status)" />
+                        </div>
+
+                        <!-- Timeline -->
+                        <RadzenRow Gap="1rem" RowGap="0.5rem">
+                            <RadzenColumn Size="6">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <RadzenIcon Icon="calendar_today" style="color: var(--rz-text-secondary-color);" />
+                                    <div>
+                                        <RadzenText Text="Deadline" TextStyle="Radzen.Blazor.TextStyle.Caption" style="color: var(--rz-text-secondary-color);" />
+                                        <RadzenText Text="@assignment.Deadline.ToString("yyyy-MM-dd")" TextStyle="Radzen.Blazor.TextStyle.Body2" style="font-weight: 500;" />
+                                    </div>
+                                </div>
+                            </RadzenColumn>
+                            @if (assignment.SubmittedDate.HasValue)
+                            {
+                                <RadzenColumn Size="6">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <RadzenIcon Icon="check_circle" style="color: #4caf50;" />
+                                        <div>
+                                            <RadzenText Text="Inlämnad" TextStyle="Radzen.Blazor.TextStyle.Caption" style="color: var(--rz-text-secondary-color);" />
+                                            <RadzenText Text="@assignment.SubmittedDate.Value.ToString("yyyy-MM-dd")" TextStyle="Radzen.Blazor.TextStyle.Body2" style="font-weight: 500; color: #4caf50;" />
+                                        </div>
+                                    </div>
+                                </RadzenColumn>
+                            }
+                        </RadzenRow>
+
+                        <!-- Betyg & Feedback -->
+                        @if (assignment.Grade.HasValue || !string.IsNullOrEmpty(assignment.Feedback))
+                        {
+                            <div style="padding: 12px; background: linear-gradient(135deg, rgba(76,175,80,0.1) 0%, rgba(76,175,80,0.05) 100%); border-radius: 8px; border-left: 3px solid #4caf50;">
+                                <RadzenStack Gap="0.8rem">
+                                    @if (assignment.Grade.HasValue)
+                                    {
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <RadzenText Text="Betyg" TextStyle="Radzen.Blazor.TextStyle.Body2" />
+                                            <RadzenText Text="@($"{assignment.Grade}%")" TextStyle="Radzen.Blazor.TextStyle.Body2" style="font-weight: 600; color: #4caf50; font-size: 18px;" />
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(assignment.Feedback))
+                                    {
+                                        <div>
+                                            <RadzenText Text="💬 Feedback från lärare:" TextStyle="Radzen.Blazor.TextStyle.Body2" style="color: #4caf50;" />
+                                            <RadzenText Text="@assignment.Feedback" TextStyle="Radzen.Blazor.TextStyle.Body2" style="margin-top: 8px; font-style: italic; color: var(--rz-text-secondary-color);" />
+                                        </div>
+                                    }
+                                </RadzenStack>
+                            </div>
+                        }
+                    </RadzenStack>
+                </RadzenCard>
+            }
+        </RadzenStack>
+    </div>
+</RadzenStack>
+
+@code {
+    private List<Assignment> Assignments;
+
+    protected override void OnInitialized()
+    {
+        Assignments = MockDataService.GetAssignmentsForStudent(1);
+    }
+
+    private string GetBadgeStyle(string status)
+    {
+        return status switch
+        {
+            "Inlämnad" => "background-color: #4caf50; color: white;",
+            "Ej inlämnad" => "background-color: #ff9800; color: white;",
+            "Försenad" => "background-color: #f44336; color: white;",
+            "Returnerad" => "background-color: #2196f3; color: white;",
+            _ => "background-color: #9e9e9e; color: white;"
+        };
+    }
+
+    private string GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "Inlämnad" => "#4caf50",
+            "Ej inlämnad" => "#ff9800",
+            "Försenad" => "#f44336",
+            "Returnerad" => "#2196f3",
+            _ => "#9e9e9e"
+        };
+    }
+}

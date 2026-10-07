@@ -1,0 +1,111 @@
+@page "/kursdeltagare"
+@inject MockDataService MockDataService
+@using TestClaudeLMS01.Client.Services
+
+<PageTitle>Kursdeltagare</PageTitle>
+
+<RadzenStack Gap="2rem">
+    <!-- Rubrik -->
+    <div>
+        <RadzenText Text="Klasskompisar" TextStyle="Radzen.Blazor.TextStyle.DisplayH4" />
+        <RadzenText Text="Frontend-utvecklare (FED101)" TextStyle="Radzen.Blazor.TextStyle.Body2" style="color: var(--rz-text-secondary-color); margin-top: 5px;" />
+    </div>
+
+    <!-- Statistik -->
+    <RadzenRow Gap="2rem" RowGap="1rem">
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard Style="padding: 15px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <RadzenText Text="@TotalStudents" TextStyle="Radzen.Blazor.TextStyle.H4" style="margin: 0; color: white;" />
+                <RadzenText Text="Totalt i kursen" TextStyle="Radzen.Blazor.TextStyle.Caption" style="color: rgba(255,255,255,0.9);" />
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard Style="padding: 15px; text-align: center; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                <RadzenText Text="@CompletedStudents" TextStyle="Radzen.Blazor.TextStyle.H4" style="margin: 0; color: white;" />
+                <RadzenText Text="Klara med kursen" TextStyle="Radzen.Blazor.TextStyle.Caption" style="color: rgba(255,255,255,0.9);" />
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard Style="padding: 15px; text-align: center; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                <RadzenText Text="@AverageProgress" TextStyle="Radzen.Blazor.TextStyle.H4" style="margin: 0; color: white;" />
+                <RadzenText Text="Genomsnittligt framsteg" TextStyle="Radzen.Blazor.TextStyle.Caption" style="color: rgba(255,255,255,0.9);" />
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard Style="padding: 15px; text-align: center; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <RadzenText Text="@ActiveToday" TextStyle="Radzen.Blazor.TextStyle.H4" style="margin: 0; color: white;" />
+                <RadzenText Text="Aktiva idag" TextStyle="Radzen.Blazor.TextStyle.Caption" style="color: rgba(255,255,255,0.9);" />
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Klasskompisar-kort -->
+    <div>
+        <RadzenText Text="Alla deltagare" TextStyle="Radzen.Blazor.TextStyle.H5" style="margin-bottom: 15px;" />
+        <RadzenRow Gap="2rem" RowGap="2rem">
+            @foreach (var student in Students.OrderByDescending(s => s.CourseProgress))
+            {
+                <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                    <RadzenCard Style="padding: 20px; height: 100%; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.06)';">
+                        <RadzenStack Gap="1rem">
+                            <!-- Avatar + Namn -->
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px;">
+                                    @student.Name.First()
+                                </div>
+                                <div>
+                                    <RadzenText Text="@student.Name" TextStyle="Radzen.Blazor.TextStyle.Body1" style="font-weight: 500;" />
+                                    <RadzenText Text="@student.Email" TextStyle="Radzen.Blazor.TextStyle.Caption" style="color: var(--rz-text-secondary-color);" />
+                                </div>
+                            </div>
+
+                            <!-- Progress -->
+                            <div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <RadzenText Text="Kursframsteg" TextStyle="Radzen.Blazor.TextStyle.Body2" />
+                                    <RadzenText Text="@($"{student.CourseProgress}%")" TextStyle="Radzen.Blazor.TextStyle.Body2" style="font-weight: 500;" />
+                                </div>
+                                <RadzenProgressBar Value="@student.CourseProgress" />
+                            </div>
+
+                            <!-- Senaste aktivitet -->
+                            @if (student.LastActivity.HasValue)
+                            {
+                                <div style="display: flex; align-items: center; gap: 6px; padding-top: 8px; border-top: 1px solid var(--rz-border-color);">
+                                    <RadzenIcon Icon="schedule" style="font-size: 14px; color: var(--rz-text-secondary-color);" />
+                                    <RadzenText Text="@GetRelativeTime(student.LastActivity.Value)" TextStyle="Radzen.Blazor.TextStyle.Caption" style="color: var(--rz-text-secondary-color);" />
+                                </div>
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+            }
+        </RadzenRow>
+    </div>
+</RadzenStack>
+
+@code {
+    private List<Student> Students;
+    private string TotalStudents;
+    private string CompletedStudents;
+    private string AverageProgress;
+    private string ActiveToday;
+
+    protected override void OnInitialized()
+    {
+        Students = MockDataService.GetStudentsForCourse(1);
+        TotalStudents = Students.Count.ToString();
+        CompletedStudents = Students.Count(s => s.CourseProgress == 100).ToString();
+        AverageProgress = ((int)Students.Average(s => s.CourseProgress)).ToString();
+        ActiveToday = Students.Count(s => s.LastActivity.HasValue && (DateTime.Now - s.LastActivity.Value).TotalDays < 1).ToString();
+    }
+
+    private string GetRelativeTime(DateTime dateTime)
+    {
+        var span = DateTime.Now - dateTime;
+        if (span.TotalHours < 1) return "Nyss aktiv";
+        if (span.TotalHours < 24) return $"Aktiv för {(int)span.TotalHours}h sedan";
+        if (span.TotalDays < 7) return $"Aktiv för {(int)span.TotalDays}d sedan";
+        return "Inaktiv";
+    }
+}

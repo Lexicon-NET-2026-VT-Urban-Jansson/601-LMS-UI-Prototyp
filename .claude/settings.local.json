@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__radzen-blazor-studio__get_page_tree"
+    ]
+  }
+}
